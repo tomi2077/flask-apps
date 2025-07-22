@@ -4,7 +4,7 @@ import random
 import os
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Needed for flash messages
+app.secret_key = os.urandom(24)   # needed for flash messages
 
 QUOTES_FILE = 'quotes.json'
 
@@ -12,29 +12,37 @@ def load_quotes():
     if not os.path.exists(QUOTES_FILE):
         return []
 
-    with open(QUOTES_FILE, 'rb') as f:
-        raw_bytes = f.read()
-    print(f"Read {len(raw_bytes)} bytes from {QUOTES_FILE}")
-
-    encodings_to_try = ['utf-8', 'utf-16', 'latin1']
-    for enc in encodings_to_try:
+    try:
+        with open(QUOTES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except UnicodeDecodeError:
         try:
-            print(f"Trying to decode as {enc}")
-            text = raw_bytes.decode(enc)
-            quotes = json.loads(text)
-            print(f"Successfully decoded and parsed JSON with {enc}")
-            return quotes
-        except UnicodeDecodeError as ude:
-            print(f"UnicodeDecodeError decoding with {enc}: {ude}")
-        except json.JSONDecodeError as jde:
-            print(f"JSONDecodeError parsing JSON with {enc}: {jde}")
-
-    raise Exception(f"Could not decode or parse {QUOTES_FILE} with any encoding.")
+            with open(QUOTES_FILE, 'r', encoding='utf-16') as f:
+                return json.load(f)
+        except UnicodeDecodeError:
+            with open(QUOTES_FILE, 'r', encoding='latin1') as f:
+                return json.load(f)
 
 
+# def load_quotes():
+#     if not os.path.exists(QUOTES_FILE):
+#         return []
+
+#     try:
+#         with open(QUOTES_FILE, 'r', encoding='utf-8') as f:
+#             return json.load(f)
+#     except UnicodeDecodeError:
+#         # Try fallback encoding
+#         with open(QUOTES_FILE, 'r', encoding='latin1') as f:
+#             return json.load(f)
+
+# def load_quotes():
+#     if not os.path.exists(QUOTES_FILE):
+#         return []
+#     with open(QUOTES_FILE, 'r', encoding='utf-8') as f:
+#         return json.load(f)
 
 def save_quotes(quotes):
-    # Always save as UTF-8 to keep things consistent
     with open(QUOTES_FILE, 'w', encoding='utf-8') as f:
         json.dump(quotes, f, indent=2, ensure_ascii=False)
 
